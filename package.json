@@ -38,6 +38,7 @@
       "electron/**/*",
       "Phone/**/*",
       "!Phone/.DS_Store",
+      "!Phone/sw.js",
       "package.json"
     ],
     "mac": {

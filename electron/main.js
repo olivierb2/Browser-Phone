@@ -235,6 +235,19 @@ function setupAppMenu() {
 app.setAppUserModelId('com.innovateasterisk.browserphone');
 
 app.whenReady().then(() => {
+  // Clear any cached service worker data
+  if (isDev) {
+    console.log('Clearing service worker cache for development...');
+    const session = require('electron').session;
+    session.defaultSession.clearStorageData({
+      storages: ['serviceworkers', 'cachestorage']
+    }).then(() => {
+      console.log('Service worker cache cleared');
+    }).catch((error) => {
+      console.warn('Failed to clear service worker cache:', error);
+    });
+  }
+
   createWindow();
   createTray();
   setupAppMenu();
