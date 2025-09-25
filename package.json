@@ -1,0 +1,83 @@
+{
+  "name": "browser-phone-electron",
+  "version": "0.3.29",
+  "description": "Browser Phone - A fully featured WebRTC SIP phone for Asterisk as an Electron app",
+  "main": "electron/main.js",
+  "author": {
+    "name": "Innovate Asterisk",
+    "email": "info@innovateasterisk.com"
+  },
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/InnovateAsterisk/Browser-Phone",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/InnovateAsterisk/Browser-Phone.git"
+  },
+  "scripts": {
+    "electron": "electron .",
+    "electron-dev": "NODE_ENV=development electron .",
+    "start": "npm run electron",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "dist": "electron-builder --publish=never",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.innovateasterisk.browserphone",
+    "productName": "Browser Phone",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "Phone/**/*",
+      "!Phone/.DS_Store",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "icon": "Phone/icons/512.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ]
+    },
+    "win": {
+      "icon": "Phone/icons/512.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "Phone/icons/512.png",
+      "category": "Network",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createStartMenuShortcut": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

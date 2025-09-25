@@ -602,3 +602,21 @@ $ sudo asterisk -r
 ![Video Call Presenting Scratchpad](https://github.com/InnovateAsterisk/Browser-Phone/blob/master/Screenshots/VideoCall_PresentScratchpad.jpg)
 
 ![Video Call Presenting Video File](https://github.com/InnovateAsterisk/Browser-Phone/blob/master/Screenshots/VideoCall_PresentVideo.jpg)
+
+
+
+
+
+
+Development:
+  npm install
+  npm run electron-dev    # Development mode (window shown, devtools open)
+  npm start              # Normal mode (minimized to tray)
+  npm start -- --show    # Force show window
+
+  Building:
+  npm run build          # Build for current platform
+  npm run build:win      # Windows
+  npm run build:mac      # macOS  
+  npm run build:linux    # Linux
+  npm run pack          # Package without installer
