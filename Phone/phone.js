@@ -1911,12 +1911,23 @@ function PreloadAudioFiles(){
         oReq.open("GET", item.url, true);
         oReq.responseType = "blob";
         oReq.onload = function(oEvent) {
-            var reader = new FileReader();
-            reader.readAsDataURL(oReq.response);
-            reader.onload = function() {
-                item.blob = reader.result;
+            if (oReq.status === 200) {
+                var reader = new FileReader();
+                reader.readAsDataURL(oReq.response);
+                reader.onload = function() {
+                    item.blob = reader.result;
+                }
+            } else {
+                console.warn("Failed to load audio file:", item.url, "Status:", oReq.status);
             }
         }
+        oReq.onerror = function(oEvent) {
+            console.warn("Network error loading audio file:", item.url);
+        }
+        oReq.ontimeout = function(oEvent) {
+            console.warn("Timeout loading audio file:", item.url);
+        }
+        oReq.timeout = 5000; // 5 second timeout
         oReq.send();
     });
     // console.log(audioBlobs);
