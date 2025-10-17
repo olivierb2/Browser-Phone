@@ -67,10 +67,20 @@ const availableLang = ["fr", "ja", "zh-hans", "zh", "ru", "tr", "nl", "es", "de"
  * Image Assets
  * Note: You can specify the assets to use below in array format
  */
-let imagesDirectory = getDbItem("imagesDirectory", "");     // Directory For Image Assets eg: images/ 
-let defaultAvatars = getDbItem("defaultAvatars", "avatars/default.0.webp,avatars/default.1.webp,avatars/default.2.webp,avatars/default.3.webp,avatars/default.4.webp,avatars/default.5.webp,avatars/default.6.webp,avatars/default.7.webp,avatars/default.8.webp"); 
+let imagesDirectory = getDbItem("imagesDirectory", "");     // Directory For Image Assets eg: images/
+let defaultAvatars = getDbItem("defaultAvatars", "avatars/default.0.webp,avatars/default.1.webp,avatars/default.2.webp,avatars/default.3.webp,avatars/default.4.webp,avatars/default.5.webp,avatars/default.6.webp,avatars/default.7.webp,avatars/default.8.webp");
 let wallpaperLight = getDbItem("wallpaperLight", "wallpaper.light.webp");  // Wallpaper for Light Theme
 let wallpaperDark = getDbItem("wallpaperDark", "wallpaper.dark.webp");     // Wallpaper for Dark Theme
+
+/**
+ * Audio Assets
+ * Note: You can specify the available ringtones below in array format
+ */
+let availableRingtones = getDbItem(
+  "availableRingtones",
+  "Ringtone_1.mp3,Ringtone_2.mp3"
+); // Available ringtones separated by comma
+let selectedRingtone = getDbItem("selectedRingtone", "Ringtone_2.mp3");     // Selected ringtone
 
 /**
  * 
@@ -1893,7 +1903,7 @@ function ApplyThemeColor(){
 
 function PreloadAudioFiles(){
     audioBlobs.Alert = { file : "Alert.mp3", url : hostingPrefix +"media/Alert.mp3" }
-    audioBlobs.Ringtone = { file : "Ringtone_1.mp3", url : hostingPrefix +"media/Ringtone_1.mp3" }
+    audioBlobs.Ringtone = { file : selectedRingtone, url : hostingPrefix +"media/"+ selectedRingtone }
     audioBlobs.speech_orig = { file : "speech_orig.mp3", url : hostingPrefix +"media/speech_orig.mp3" }
     audioBlobs.Busy_UK = { file : "Tone_Busy-UK.mp3", url : hostingPrefix +"media/Tone_Busy-UK.mp3" }
     audioBlobs.Busy_US = { file : "Tone_Busy-US.mp3", url : hostingPrefix +"media/Tone_Busy-US.mp3" }
@@ -11889,6 +11899,8 @@ function ShowMyProfile(){
     AudioVideoHtml += "<div style=\"text-align:center\"><select id=ringDevice style=\"width:100%\"></select></div>";
     AudioVideoHtml += "<div class=Settings_VolumeOutput_Container><div id=Settings_RingerOutput class=Settings_VolumeOutput></div></div>";
     AudioVideoHtml += "<div><button class=roundButtons id=preview_ringer_play><i class=\"fa fa-play\"></i></button></div>";
+    AudioVideoHtml += "<div class=UiText>"+ lang.ringtone +":</div>";
+    AudioVideoHtml += "<div style=\"text-align:center\"><select id=selectRingtone style=\"width:100%\"></select></div>";
     AudioVideoHtml += "</div>";
 
     AudioVideoHtml += "<div class=UiText>"+ lang.microphone +":</div>";
@@ -12379,8 +12391,34 @@ function ShowMyProfile(){
         });
 
         // Ring Tone
-        var selectRingTone = $("#ringTone");
-        // TODO
+        var selectRingtoneDropdown = $("#selectRingtone");
+        selectRingtoneDropdown.change(function(){
+            console.log("Call to change Ringtone ("+ this.value +")");
+            selectedRingtone = this.value;
+            localDB.setItem("selectedRingtone", this.value);
+
+            // Update the audioBlobs.Ringtone to use the new ringtone
+            audioBlobs.Ringtone = {
+                file: this.value,
+                url: hostingPrefix + "media/" + this.value
+            };
+
+            // Reload the audio blob
+            var oReq = new XMLHttpRequest();
+            oReq.open("GET", audioBlobs.Ringtone.url, true);
+            oReq.responseType = "blob";
+            oReq.onload = function(oEvent) {
+                if (oReq.status === 200) {
+                    var reader = new FileReader();
+                    reader.readAsDataURL(oReq.response);
+                    reader.onload = function() {
+                        audioBlobs.Ringtone.blob = reader.result;
+                        console.log("Ringtone updated to:", selectedRingtone);
+                    }
+                }
+            }
+            oReq.send();
+        });
     
         // Ring Device
         var selectRingDevice = $("#ringDevice");
@@ -12756,6 +12794,20 @@ function ShowMyProfile(){
                             if(getVideoSrcID() == "default" || getVideoSrcID() == "" || getVideoSrcID() == "null") option.prop("selected", true);
                             option.text("("+ lang.default_video_src +")");
                             selectVideoScr.append(option);
+                        }
+                    }
+
+                    // Populate Ringtone Selector
+                    var selectRingtone = $("#selectRingtone");
+                    var ringtones = availableRingtones.split(',');
+                    for(var i = 0; i < ringtones.length; i++){
+                        var ringtone = ringtones[i].trim();
+                        if(ringtone != ""){
+                            var option = $('<option/>');
+                            option.prop("value", ringtone);
+                            option.text(ringtone.replace('.mp3', '').replace(/_/g, ' '));
+                            if(selectedRingtone == ringtone) option.prop("selected", true);
+                            selectRingtone.append(option);
                         }
                     }
                 }).catch(function(e){
