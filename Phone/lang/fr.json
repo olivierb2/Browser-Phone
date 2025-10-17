@@ -306,5 +306,11 @@
     "pin_to_top" : "Épinglé",
     "voice_mail" : "Messagerie vocale",
     "you_have_new_voice_mail" : "Vous avez {0} nouveaux messages vocaux.",
-    "new_voice_mail" : "Nouveau message vocal"
+    "new_voice_mail" : "Nouveau message vocal",
+    "import_contacts_csv" : "Importer depuis CSV",
+    "import_complete" : "Importation terminée",
+    "imported" : "Importés",
+    "skipped" : "Ignorés",
+    "errors" : "Erreurs",
+    "more_errors" : "erreurs supplémentaires"
 }

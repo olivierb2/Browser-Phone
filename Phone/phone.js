@@ -1250,6 +1250,192 @@ function AddSomeoneWindow(numberStr){
 function CreateGroupWindow(){
     // lang.create_group
 }
+function ImportContactsFromCSV(){
+    // Create hidden file input
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv,text/csv';
+    fileInput.style.display = 'none';
+
+    fileInput.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+
+        var reader = new FileReader();
+        reader.onload = function(event) {
+            var csvData = event.target.result;
+            ProcessCSVImport(csvData);
+        };
+        reader.readAsText(file);
+    };
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+}
+function ProcessCSVImport(csvData){
+    var lines = csvData.split('\n');
+    var imported = 0;
+    var skipped = 0;
+    var errors = [];
+
+    // Get existing buddies
+    var json = JSON.parse(localDB.getItem(profileUserID + "-Buddies"));
+    if(json == null) json = InitUserBuddies();
+
+    // Skip header line if present
+    var startLine = 0;
+    if(lines.length > 0 && lines[0].toLowerCase().indexOf('name') >= 0) {
+        startLine = 1;
+    }
+
+    for(var i = startLine; i < lines.length; i++){
+        var line = lines[i].trim();
+        if(line == "") continue;
+
+        // Parse CSV line (simple comma split, handles quoted fields)
+        var fields = ParseCSVLine(line);
+
+        if(fields.length < 2) {
+            skipped++;
+            continue;
+        }
+
+        // Expected format: Name, Extension/Contact, Type, Mobile, Email, Contact1, Contact2, Description
+        var name = fields[0] || "";
+        var extenOrContact = fields[1] || "";
+        var type = (fields[2] || "contact").toLowerCase();
+        var mobile = fields[3] || "";
+        var email = fields[4] || "";
+        var contact1 = fields[5] || "";
+        var contact2 = fields[6] || "";
+        var description = fields[7] || "";
+
+        if(name == "" || (type == "extension" && extenOrContact == "")) {
+            skipped++;
+            continue;
+        }
+
+        try {
+            var id = uID();
+            var dateNow = utcDateNow();
+
+            if(type == "extension" || type == "exten") {
+                // Add as Extension
+                json.DataCollection.push({
+                    Type: "extension",
+                    LastActivity: dateNow,
+                    ExtensionNumber: extenOrContact,
+                    MobileNumber: mobile,
+                    ContactNumber1: contact1,
+                    ContactNumber2: contact2,
+                    uID: id,
+                    cID: null,
+                    gID: null,
+                    jid: null,
+                    DisplayName: name,
+                    Description: description,
+                    Email: email,
+                    MemberCount: 0,
+                    EnableDuringDnd: false,
+                    Subscribe: false,
+                    SubscribeUser: "",
+                    AutoDelete: AutoDeleteDefault
+                });
+
+                var buddyObj = new Buddy("extension", id, name, extenOrContact, mobile,
+                                         contact1, contact2, dateNow, description, email,
+                                         null, false, false, "", AutoDeleteDefault);
+                AddBuddy(buddyObj, false, false, false, false);
+            }
+            else {
+                // Add as Contact
+                json.DataCollection.push({
+                    Type: "contact",
+                    LastActivity: dateNow,
+                    ExtensionNumber: "",
+                    MobileNumber: mobile || extenOrContact,
+                    ContactNumber1: contact1,
+                    ContactNumber2: contact2,
+                    uID: null,
+                    cID: id,
+                    gID: null,
+                    jid: null,
+                    DisplayName: name,
+                    Description: description,
+                    Email: email,
+                    MemberCount: 0,
+                    EnableDuringDnd: false,
+                    Subscribe: false,
+                    SubscribeUser: null,
+                    AutoDelete: AutoDeleteDefault
+                });
+
+                var buddyObj = new Buddy("contact", id, name, "", mobile || extenOrContact,
+                                         contact1, contact2, dateNow, description, email,
+                                         null, false, false, null, AutoDeleteDefault);
+                AddBuddy(buddyObj, false, false, false, false);
+            }
+
+            imported++;
+        }
+        catch(err) {
+            errors.push("Line " + (i+1) + ": " + err.message);
+            skipped++;
+        }
+    }
+
+    // Save to DB
+    json.TotalRows = json.DataCollection.length;
+    localDB.setItem(profileUserID + "-Buddies", JSON.stringify(json));
+
+    // Update UI
+    UpdateBuddyList();
+
+    // Show results
+    var message = lang.import_complete + "\n\n";
+    message += lang.imported + ": " + imported + "\n";
+    if(skipped > 0) {
+        message += lang.skipped + ": " + skipped + "\n";
+    }
+    if(errors.length > 0) {
+        message += "\n" + lang.errors + ":\n" + errors.slice(0, 5).join("\n");
+        if(errors.length > 5) {
+            message += "\n... +" + (errors.length - 5) + " " + lang.more_errors;
+        }
+    }
+
+    Alert(message, lang.import_contacts_csv);
+}
+function ParseCSVLine(line){
+    var fields = [];
+    var field = "";
+    var inQuotes = false;
+
+    for(var i = 0; i < line.length; i++){
+        var char = line[i];
+
+        if(char == '"') {
+            if(inQuotes && line[i+1] == '"') {
+                // Escaped quote
+                field += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        }
+        else if(char == ',' && !inQuotes) {
+            fields.push(field.trim());
+            field = "";
+        }
+        else {
+            field += char;
+        }
+    }
+
+    fields.push(field.trim());
+    return fields;
+}
 function checkNotificationPromise() {
     try {
         Notification.requestPermission().then();
@@ -1784,6 +1970,7 @@ function ShowMyProfileMenu(obj){
     items.push({ icon: "fa fa-wrench", text: lang.configure_extension, value: 2});
     items.push({ icon: null, text: "-" });
     items.push({ icon: "fa fa-user-plus", text: lang.add_someone, value: 3});
+    items.push({ icon: "fa fa-upload", text: lang.import_contacts_csv, value: 10});
     // items.push({ icon: "fa fa-users", text: lang.create_group, value: 4}); // TODO
     items.push({ icon : null, text: "-" });
     if(AutoAnswerEnabled == true){
@@ -1846,6 +2033,9 @@ function ShowMyProfileMenu(obj){
             }
             if(id == "9") {
                 SetStatusWindow();
+            }
+            if(id == "10") {
+                ImportContactsFromCSV();
             }
 
         },

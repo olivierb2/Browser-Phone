@@ -306,5 +306,11 @@
     "pin_to_top" : "Pinned",
     "voice_mail" : "VoiceMail",
     "you_have_new_voice_mail" : "You have {0} new VoiceMail messages.",
-    "new_voice_mail" : "New VoiceMail Message"
+    "new_voice_mail" : "New VoiceMail Message",
+    "import_contacts_csv" : "Import from CSV",
+    "import_complete" : "Import complete",
+    "imported" : "Imported",
+    "skipped" : "Skipped",
+    "errors" : "Errors",
+    "more_errors" : "more errors"
 }
